@@ -111,5 +111,5 @@ clean:
 	rm -f *.elf *.dump *.mem
 
 nuke:	clean
-	rm -f synth/*.vg synth/*.rep synth/*.ddc synth/*.chk synth/command.log
-	rm -f synth/*.out command.log synth/*.db synth/*.svf
+	rm -rf synth/*.vg synth/*.rep synth/*.ddc synth/*.chk synth/command.log synth/*.syn
+	rm -rf synth/*.out command.log synth/*.db synth/*.svf synth/*.mr synth/*.pvl
