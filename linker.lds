@@ -1,3 +1,11 @@
+/***************************************************
+* linker.lds
+* a linker script used to link RISC-V object files
+* .text section starts at 0x0
+* stack pointer allocated at 0x4000
+*   - Jielun Tan, 02/2019
+**************************************************/
+
 OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv",
 	"elf32-littleriscv")
 
@@ -53,10 +61,8 @@ SECTIONS
   /*.= ORIGIN(MEM);
   */
   .data ALIGN((ADDR(.srodata) + SIZEOF(.srodata)), 32) : AT(ALIGN((LOADADDR(.srodata) + SIZEOF(.srodata)), 32)) ALIGN_WITH_INPUT {
-	  begin_signature = .;
     *(.data .data.* .gnu.linkonce.d.*)
     *(.tohost) /* TODO: Support sections that aren't explicitly listed in this linker script */
-	end_signature = .;
   } >MEM  :data
 
   .sdata ALIGN((ADDR(.data) + SIZEOF(.data)), 32) : AT(ALIGN((LOADADDR(.data) + SIZEOF(.data)), 32)) ALIGN_WITH_INPUT {

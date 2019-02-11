@@ -1,3 +1,11 @@
+/***************************************************
+* aslinker.lds
+* a linker script used to link assembly programs
+* .text section starts at 0x0 and doesn't really do
+* anything else
+*   - Jielun Tan, 02/2019
+**************************************************/
+
 OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv",
 	"elf32-littleriscv")
 

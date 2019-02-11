@@ -1,3 +1,12 @@
+#####################################
+# crt.s
+# C Runtime setup for our environment
+# allocates the stack pointer
+# initializes all registers
+# provide a simpler exit() function
+#   - Jielun Tan, 02#2019
+####################################
+
 .global crt
 .section .text.prologue, "ax"
 .align 4
