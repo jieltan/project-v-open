@@ -3,6 +3,8 @@
  *                 pipeline.  Must compile with the '+vc' vcs flag.
  *
  *  Doug MacKay <dmackay@umich.edu> Fall 2003
+ *
+ *  Updated for RISC-V by Caleb Jones, Winter 2019
  */
 
 #include <stdio.h>

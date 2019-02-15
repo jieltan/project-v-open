@@ -29,9 +29,8 @@ int main() {
 	pats->edelman = 11; // the ironman, superbowl 53 mvp
 	//printf("the\n");
 	//printf("%i\n", pats->edelman);
-	//tj_free(pats);
 	example_t* another = (example_t*)tj_malloc(sizeof(example_t));
-	//printf("pts is %i\n", another);
-
+	printf("pts is %i\n", another);
+	tj_free(pats);
 	return 0;
 }

@@ -3,6 +3,10 @@
 // this provides a pseudo malloc that we can use
 // this implementation of malloc is O(n^2)
 // and free is O(n), so not the most efficient malloc
+// 
+// since we are allocating everything statically
+// we can only keep track of so many mallocs,
+// and the default number is 16
 // Jielun Tan and James Connolly, 02/2019
 /////////////////////////////////////////////////////
 
@@ -83,13 +87,15 @@ void *tj_malloc(unsigned int size) {
 void tj_free(void *mem) {
 
 	int tracker_index;
+	bool found = 0;
 	for (int i = 0; i < NUM_TRACKER; ++i) {
-		if (Tracker[i].start_pointer == mem) {
+		if (Tracker[i].valid && (Tracker[i].start_pointer == mem)) {
 			tracker_index = i;
+			found = 1;
 			break;
 		}
-		if (i == NUM_TRACKER - 1) exit(69);
 	}
+	if (!found) exit(1);
 
 	unsigned int most_avail_mem;
 	unsigned int mem_gap;
@@ -110,22 +116,5 @@ void tj_free(void *mem) {
 	}
 	Tracker[tracker_index].valid = 0;
 
-	//for (int i = 0; i < NUM_TRACKER; ++i) {
-	//	if (Tracker[i].valid) {
-	//		current_index = Tracker[i].start_pointer;
-	//		current_size  = Tracker[i].size;
-	//		for (int j = 0; j < NUM_TRACKER; ++j) {
-	//			if ((i != j) && Tracker[j].valid && 
-	//				(current_index < Tracker[j].start_pointer)) {
-	//				mem_gap = Tracker[j].start_pointer - current_index;
-	//				least_avail_mem = (mem_gap < least_avail_mem) ? mem_gap : least_avail_mem;
-	//			}
-	//		}
-	//		if (least_avail_mem > most_avail_mem) {
-	//			most_avail_mem = least_avail_mem;
-	//			next_index = current_index + current_size;
-	//		}
-	//	}			
-	//}
 	avail_mem = most_avail_mem;
 }
