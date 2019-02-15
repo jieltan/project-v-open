@@ -84,7 +84,7 @@
 // RV32IM Instruction encodings
 // Note that these instructions is the EXACT SAME for RV64IM, except that
 // all operand register would be 64 bits instead, they are labeled RV32 for
-// legacy reasons, but really they can be either for either 32 or 64 bit
+// legacy reasons, but really they can both be for 32 or 64 bit
 // There are some special 64 bit instructions that will only produce 32 bit
 // results, more on that later
 `define RV32_LUI       `RV32_Utype(`RV32_LUI_OP)
@@ -163,7 +163,7 @@
 
 //RV64I
 // The instructions that end with W indicates that it will only produce a 32 bit result
-// The only difference is shift is that there's an extra bit to the shift amount because
+// The only difference in shift is that there's an extra bit to the shift amount because
 // of increased register width
 `define RV64_LWU        `RV32_Itype(`RV32_LOAD, 3'b110)
 `define RV64_LD         `RV32_Itype(`RV32_LOAD, 3'b011)
