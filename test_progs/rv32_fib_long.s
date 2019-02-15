@@ -23,12 +23,22 @@
 	nop
 	nop
 	nop
-	li	x5, 0x1008
+	lui	x5, 0x1
 	nop
 	nop
 	nop
 	nop
-	li	x6, 0x1010
+	addi x5, x5, 8
+	nop
+	nop
+	nop
+	nop
+	lui	x6, 0x1
+	nop
+	nop
+	nop
+	nop
+	addi x6, x6, 16
 	nop
 	nop
 	nop

@@ -25,7 +25,7 @@ start:
 	li	x6, 0
 	li	x7, 9999
 	li	x1, 8
-	li	x2, 8
+	li	x2, 152
 
 loop:	lw	x3, 0(x1)	
 	mul	x3,	x3,	x7 # r2 <- a * x[i]
