@@ -30,7 +30,7 @@ int main() {
 	//printf("the\n");
 	//printf("%i\n", pats->edelman);
 	example_t* another = (example_t*)tj_malloc(sizeof(example_t));
-	printf("pts is %i\n", another);
+	//printf("pts is %i\n", another);
 	tj_free(pats);
 	return 0;
 }
