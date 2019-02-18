@@ -48,6 +48,8 @@ hex: program.elf
 program: compile dissemble hex
 	@:
 
+debug_program:
+	gcc -lm -g -std=gnu11 -DDEBUG $(SOURCE) -o debug_bin
 assembly: assemble dissemble hex
 	@:
 

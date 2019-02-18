@@ -13,6 +13,7 @@
 #include<stdbool.h>
 #include<stdint.h>
 #include<stdlib.h>
+#include<stdio.h>
 
 #define HEAP_SIZE 2048
 #define NUM_TRACKER 16
@@ -95,11 +96,14 @@ void tj_free(void *mem) {
 			break;
 		}
 	}
-	if (!found) exit(1);
+	if (!found) exit(420);
+#ifdef DEBUG
+	printf("tracker index is %i\n", tracker_index);
+#endif
 
-	unsigned int most_avail_mem;
+	unsigned int most_avail_mem = avail_mem;
 	unsigned int mem_gap;
-	unsigned int least_avail_mem;
+	unsigned int least_avail_mem = sizeof(heap);
 	void* current_index;
 	unsigned int current_size;
 	most_avail_mem = avail_mem;
@@ -115,6 +119,5 @@ void tj_free(void *mem) {
 		next_index = Tracker[tracker_index].start_pointer;
 	}
 	Tracker[tracker_index].valid = 0;
-
 	avail_mem = most_avail_mem;
 }
