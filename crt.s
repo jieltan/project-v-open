@@ -56,7 +56,7 @@ override_start:
 .section .text
 .align 4
 exit:
-	li sp, 0x4000
+	la sp, _sp
 	sw a0, -8(sp)
 	nop
 	wfi
