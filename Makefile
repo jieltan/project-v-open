@@ -20,7 +20,7 @@ LINKERS = linker.lds
 ASLINKERS = aslinker.lds
 
 DEBUG_FLAG = -g
-CFLAGS =  -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -std=gnu11 -mstrict-align
+CFLAGS =  -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -std=gnu11 -mstrict-align -O1 
 ASFLAGS = -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -Wno-main -mstrict-align
 OBJFLAGS = -SD -M no-aliases 
 OBJDFLAGS = -SD -M numeric,no-aliases
@@ -43,7 +43,7 @@ dissemble: program.debug.elf
 	$(OBJDUMP) $(OBJDFLAGS) program.debug.elf > program.debug.dump
 	rm program.debug.elf
 hex: program.elf
-	elf2hex 8 1024 program.elf > program.mem
+	elf2hex 8 8192 program.elf > program.mem
 
 program: compile dissemble hex
 	@:
