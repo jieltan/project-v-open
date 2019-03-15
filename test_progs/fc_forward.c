@@ -26,12 +26,11 @@ void kernel(int  vec_a[n],int  vec_b[n], int result[n], int b, int *out) {
 
 
 int main() {
-	int i = 0;
 	int x[n], W[n], inner[n];
 	int b;
 	int *out;
 	//initializing weights
-	for (i = 0; i < n; ++i) {
+	for (int i = 0; i < n; ++i) {
 		x[i] = rand() & ((1 << 16) - 1);
 		W[i] = rand() & ((1 << 16) - 1);
 		inner[i] = 0;
