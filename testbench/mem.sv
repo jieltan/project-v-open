@@ -88,11 +88,8 @@ module mem (
 	end
 `else
     wire valid_address = (proc2mem_addr<`MEM_SIZE_IN_BYTES);
+	EXAMPLE_CACHE_BLOCK c;
     // temporary wires for byte level selection because verilog does not support variable range selection
-    logic [7:0][7:0] byte_level;
-    logic [3:0][15:0] half_level;
-    logic [1:0][31:0] word_level;
-
 	always @(negedge clk) begin
 		next_mem2proc_tag      = 4'b0;
 		next_mem2proc_response = 4'b0;
@@ -113,24 +110,24 @@ module mem (
 				                          // though this could be done via a non-number
 				                          // definition for this macro
 				//filling up these temp variables
-				byte_level = unified_memory[proc2mem_addr[`XLEN-1:3]];
-				half_level = unified_memory[proc2mem_addr[`XLEN-1:3]];
-				word_level = unified_memory[proc2mem_addr[`XLEN-1:3]];
+				c.byte_level = unified_memory[proc2mem_addr[`XLEN-1:3]];
+				c.half_level = unified_memory[proc2mem_addr[`XLEN-1:3]];
+				c.word_level = unified_memory[proc2mem_addr[`XLEN-1:3]];
 
 				if(proc2mem_command == BUS_LOAD) begin
 					waiting_for_bus[i] = 1'b1;
 					loaded_data[i]     = unified_memory[proc2mem_addr[`XLEN-1:3]];
                 	case (proc2mem_size) 
                         BYTE: begin
-							loaded_data[i] = {56'b0, byte_level[proc2mem_addr[2:0]]};
+							loaded_data[i] = {56'b0, c.byte_level[proc2mem_addr[2:0]]};
                         end
                         HALF: begin
 							assert(proc2mem_addr[0] == 0);
-							loaded_data[i] = {48'b0, half_level[proc2mem_addr[2:1]]};
+							loaded_data[i] = {48'b0, c.half_level[proc2mem_addr[2:1]]};
                         end
                         WORD: begin
 							assert(proc2mem_addr[1:0] == 0);
-							loaded_data[i] = {32'b0, word_level[proc2mem_addr[2]]};
+							loaded_data[i] = {32'b0, c.word_level[proc2mem_addr[2]]};
                         end
 						DOUBLE:
 							loaded_data[i] = unified_memory[proc2mem_addr[`XLEN-1:3]];
@@ -139,23 +136,23 @@ module mem (
 				end else begin
 					case (proc2mem_size) 
                         BYTE: begin
-							byte_level[proc2mem_addr[2:0]] = proc2mem_data[7:0];
-                            unified_memory[proc2mem_addr[`XLEN-1:3]] = byte_level;
+							c.byte_level[proc2mem_addr[2:0]] = proc2mem_data[7:0];
+                            unified_memory[proc2mem_addr[`XLEN-1:3]] = c.byte_level;
                         end
                         HALF: begin
 							assert(proc2mem_addr[0] == 0);
-							half_level[proc2mem_addr[2:1]] = proc2mem_data[15:0];
-                            unified_memory[proc2mem_addr[`XLEN-1:3]] = half_level;
+							c.half_level[proc2mem_addr[2:1]] = proc2mem_data[15:0];
+                            unified_memory[proc2mem_addr[`XLEN-1:3]] = c.half_level;
                         end
                         WORD: begin
 							assert(proc2mem_addr[1:0] == 0);
-							word_level[proc2mem_addr[2]] = proc2mem_data[31:0];
-                            unified_memory[proc2mem_addr[`XLEN-1:3]] = word_level;
+							c.word_level[proc2mem_addr[2]] = proc2mem_data[31:0];
+                            unified_memory[proc2mem_addr[`XLEN-1:3]] = c.word_level;
                         end
                         default: begin
 							assert(proc2mem_addr[1:0] == 0);
-							byte_level[proc2mem_addr[2]] = proc2mem_data[31:0];
-                            unified_memory[proc2mem_addr[`XLEN-1:3]] = word_level;
+							c.byte_level[proc2mem_addr[2]] = proc2mem_data[31:0];
+                            unified_memory[proc2mem_addr[`XLEN-1:3]] = c.word_level;
                         end
 					endcase
 				end

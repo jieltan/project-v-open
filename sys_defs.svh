@@ -25,6 +25,12 @@
 //you can change the clock period to whatever, 10 is just fine
 `define VERILOG_CLOCK_PERIOD   10.0
 
+typedef union packed {
+    logic [7:0][7:0] byte_level;
+    logic [3:0][15:0] half_level;
+    logic [1:0][31:0] word_level;
+} EXAMPLE_CACHE_BLOCK;
+
 //////////////////////////////////////////////
 // Exception codes
 // This mostly follows the RISC-V Privileged spec
