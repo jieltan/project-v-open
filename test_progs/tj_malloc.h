@@ -82,6 +82,9 @@ void *tj_malloc(unsigned int size) {
 			Tracker[tracker_index].valid = 1;
 		}
 	}
+#ifdef DEBUG
+	printf("returned pointer is %i\n", mem);
+#endif
     return mem;
 }
 
@@ -98,7 +101,7 @@ void tj_free(void *mem) {
 	}
 	if (!found) exit(420);
 #ifdef DEBUG
-	printf("tracker index is %i\n", tracker_index);
+	printf("tracker index is %i and mem is %i\n", tracker_index, mem);
 #endif
 
 	unsigned int most_avail_mem = avail_mem;
