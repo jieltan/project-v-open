@@ -15,112 +15,102 @@
 #include<stdlib.h>
 #include<stdio.h>
 
-#define HEAP_SIZE 2048
+#define HEAP_SIZE 16*1024
 #define NUM_TRACKER 16
-static unsigned char heap[HEAP_SIZE]; //reserve 2 KiB for malloc
+static unsigned char heap[HEAP_SIZE]; //reserve 16 KiB for malloc
 static void* next_index = (void *)heap; //the next place to be allocated
 static unsigned int avail_mem = sizeof(heap); //the most CONTIGUOUS memory available
 
-typedef struct {
-	void* start_pointer;
-	uint16_t size;
-	bool valid;
-}tracker_t;
+typedef struct header { //block header
+	struct header *next; //next block if on free list
+	unsigned int size; //size of this block
+} Header;
+static Header base; //empty list to get started
+static Header *freep = NULL; //start of the free list
 
-static tracker_t Tracker[NUM_TRACKER];
+
+void tj_free(void *mem) {
+	Header *bp, *p;
+	bp = (Header *)mem - 1; //point to block header
+	//scan the free list to see where the current block should sit in between
+	for (p = freep; !(bp > p && bp < p->next); p = p->next) 
+		// self wrapped free list with only one entry
+		//                  or you are just at the very beginning/end
+		if (p >= p->next && (bp > p || bp < p->ptr))
+			break; //freed block at start of end of the arena
+		//we can merge the 2 free blocks if they are adjacent to each other
+		//or we just can append a new entry into the free list
+		if (bp + bp->size == p->next) { //join to upper nbr
+			//merge if exactly adjacent
+			bp->size += p->next->size;
+			bp->next = p->next->next;
+		} else
+			bp->next = p->next; //insert bp after p in the linked list
+			//if p is freep which is base, then this will make the newly
+			//allocated block point to base
+
+		if (p + p->size == bp) { //join to lower nbr
+			//merge if exactly adjacent
+			p->size += bp->size;
+			p->next = bp->next;
+		} else //or just append to linked list
+			p->next = bp; //again, if the free list is just the base
+			//then effectively we just created a new entry
+			//and make it point to the base which has a size of 0
+		freep = p;
+}
+
+static Header* askmoremem(unsigned int total_size) {
+	if (avail_mem < total_size) return NULL; //gg, we ran out of mem :P
+	Header* up = (Header *)next_index;
+	next_index += total_size; //allocate the block
+	avail_mem -= total_size; //deduct from avail mem;
+	up->size = total_size - sizeof(Header); //set the size right
+	tj_free((void *)(++up)); //append the new block to the free list first
+	return freep;
+}
 
 void *tj_malloc(unsigned int size) {
+	//sanity check, so that you don't blow the memory space
+	if (size > sizeof(heap)) return NULL;
 	//we want strict word alignment just to make things easier
 	//and so that we don't have improper alignment issues
 	if ((size & 3) != 0) {
 		size = size + 4 - (size & 3);
 	}
 
-	// this is the pointer that gets returned
-    void *mem = NULL;
-	int tracker_index;
-	bool tracker_avail = 0;
-	unsigned int most_avail_mem;
-	unsigned int mem_gap;
-	unsigned int least_avail_mem;
-	void* current_index;
-	unsigned int current_size;
-
-    if((size < avail_mem)) {
-		for (int i = 0; i < NUM_TRACKER; ++i) {
-			if (!Tracker[i].valid) {
-				tracker_avail = 1;
-				tracker_index = i;
-				break;
-			}
-		}
-		if (tracker_avail) {
-		    mem = next_index;
-			next_index += size;
-			most_avail_mem = avail_mem - size;
-			for (int i = 0; i < NUM_TRACKER; ++i) {
-				if (Tracker[i].valid) {
-					current_index = Tracker[i].start_pointer;
-					current_size  = Tracker[i].size;
-					for (int j = 0; j < NUM_TRACKER; ++j) {
-						if ((i != j) && Tracker[j].valid && 
-							(current_index < Tracker[j].start_pointer)) {
-							mem_gap = Tracker[j].start_pointer - current_index - current_size;
-							least_avail_mem = (mem_gap < least_avail_mem) ? mem_gap : least_avail_mem;
-						}
-					}
-					if (least_avail_mem > most_avail_mem) {
-						most_avail_mem = least_avail_mem;
-						next_index = current_index + current_size;
-					}
-				}			
-			}
-			avail_mem = most_avail_mem;
-
-			Tracker[tracker_index].start_pointer = mem;
-			Tracker[tracker_index].size = (uint16_t)size;
-			Tracker[tracker_index].valid = 1;
-		}
+	//we want to build a linked list of the existing blocks and free blocks
+	Header *p, *prevp; //iterators
+	
+	unsigned int total_size = size + sizeof(Header); //need to include the header size as well
+	//check the linked list
+	prevp = freep;
+	//if there's no linked list yet
+	if (prevp == NULL) {
+		prevp = &base;
+		freep = prevp;
+		base.next = freep;
+		base.size = 0;
 	}
+	//traverse through the linked list, note there's no stopping condition
+	for (p = prevp->next; ;prevp = p, p = p->next) {
+		if (p->size >= size) //big enough
+			if (p->size == size) // exact size
+				prevp->next = p->next; // just return that block
+		else {
+			p->size -= total_size; //break up the block
+			p += p->size;
+			p->size = size;
+		}
+		freep = prevp;
 #ifdef DEBUG
-	printf("returned pointer is %i\n", mem);
+		printf("returned pointer is %i\n", p + 1);
 #endif
-    return mem;
+		return (void *)(++p);
+		if (p == freep) //wrapped around free list
+			if ((p = askmoremem(total_size)) == NULL) //if the heap runs out
+				return NULL; //well, you got nothing left, gg
+	}
 }
 
-void tj_free(void *mem) {
 
-	int tracker_index;
-	bool found = 0;
-	for (int i = 0; i < NUM_TRACKER; ++i) {
-		if (Tracker[i].valid && (Tracker[i].start_pointer == mem)) {
-			tracker_index = i;
-			found = 1;
-			break;
-		}
-	}
-	if (!found) exit(420);
-#ifdef DEBUG
-	printf("tracker index is %i and mem is %i\n", tracker_index, mem);
-#endif
-
-	unsigned int most_avail_mem = avail_mem;
-	unsigned int mem_gap;
-	unsigned int least_avail_mem = sizeof(heap);
-	void* current_index;
-	unsigned int current_size;
-	most_avail_mem = avail_mem;
-	for (int j = 0; j < NUM_TRACKER; ++j) {
-		if ((tracker_index != j) && Tracker[j].valid && 
-			(Tracker[tracker_index].start_pointer < Tracker[j].start_pointer)) {
-			mem_gap = Tracker[j].start_pointer - Tracker[tracker_index].start_pointer;
-			least_avail_mem = (mem_gap < least_avail_mem) ? mem_gap : least_avail_mem;
-		}
-	}
-	if (least_avail_mem > most_avail_mem) {
-		most_avail_mem = least_avail_mem;
-		next_index = Tracker[tracker_index].start_pointer;
-	}
-	Tracker[tracker_index].valid = 0;
-	avail_mem = most_avail_mem;
-}

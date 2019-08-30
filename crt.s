@@ -4,7 +4,7 @@
 # allocates the stack pointer
 # initializes all registers
 # provide a simpler exit() function
-#   - Jielun Tan, 02#2019
+#   - Jielun Tan, 02/2019
 ####################################
 
 .global crt
