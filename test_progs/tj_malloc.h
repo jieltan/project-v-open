@@ -8,15 +8,25 @@
 // we can only keep track of so many mallocs,
 // and the default number is 16
 // Jielun Tan and James Connolly, 02/2019
+// **************************************************
+// Update 08/2019: So scratch everything above, I've
+// reimplemented these functions following the example
+// provided from the C Programming Language book
+// The current implementation uses a linked list 
+// to keep track of free blocks and allocates the
+// free blocks first before grabbing more memory from
+// the heap. Both malloc and free should now be
+// O(n), since the only one search is required for
+// each operation. Also added calloc, which is just
+// malloc plus memset - Jielun Tan
 /////////////////////////////////////////////////////
 
 #include<stdbool.h>
 #include<stdint.h>
 #include<stdlib.h>
 #include<stdio.h>
-
+#include<string.h>
 #define HEAP_SIZE 16*1024
-#define NUM_TRACKER 16
 static unsigned char heap[HEAP_SIZE]; //reserve 16 KiB for malloc
 static void* next_index = (void *)heap; //the next place to be allocated
 static unsigned int avail_mem = sizeof(heap); //the most CONTIGUOUS memory available
@@ -30,13 +40,18 @@ static Header *freep = NULL; //start of the free list
 
 
 void tj_free(void *mem) {
+	//sanity check, we don't want to free memory that's not
+	//in the heap
+	if (mem < (void *)heap || mem > (void *)(heap + sizeof(heap)))
+		exit(1);
+
 	Header *bp, *p;
 	bp = (Header *)mem - 1; //point to block header
 	//scan the free list to see where the current block should sit in between
 	for (p = freep; !(bp > p && bp < p->next); p = p->next) 
 		// self wrapped free list with only one entry
 		//                  or you are just at the very beginning/end
-		if (p >= p->next && (bp > p || bp < p->ptr))
+		if (p >= p->next && (bp > p || bp < p->next))
 			break; //freed block at start of end of the arena
 		//we can merge the 2 free blocks if they are adjacent to each other
 		//or we just can append a new entry into the free list
@@ -60,7 +75,7 @@ void tj_free(void *mem) {
 		freep = p;
 }
 
-static Header* askmoremem(unsigned int total_size) {
+static Header* getmoremem(unsigned int total_size) {
 	if (avail_mem < total_size) return NULL; //gg, we ran out of mem :P
 	Header* up = (Header *)next_index;
 	next_index += total_size; //allocate the block
@@ -94,23 +109,28 @@ void *tj_malloc(unsigned int size) {
 	}
 	//traverse through the linked list, note there's no stopping condition
 	for (p = prevp->next; ;prevp = p, p = p->next) {
-		if (p->size >= size) //big enough
+		if (p->size >= size) { //big enough
 			if (p->size == size) // exact size
 				prevp->next = p->next; // just return that block
-		else {
-			p->size -= total_size; //break up the block
-			p += p->size;
-			p->size = size;
-		}
-		freep = prevp;
+			else {
+				p->size -= total_size; //break up the block
+				p += p->size;
+				p->size = size;
+			}
+			freep = prevp;
 #ifdef DEBUG
-		printf("returned pointer is %i\n", p + 1);
+			printf("returned pointer is %i\n", (int)p + 1);
 #endif
-		return (void *)(++p);
+			return (void *)(++p);
+		}
 		if (p == freep) //wrapped around free list
-			if ((p = askmoremem(total_size)) == NULL) //if the heap runs out
+			if ((p = getmoremem(total_size)) == NULL) //if the heap runs out
 				return NULL; //well, you got nothing left, gg
 	}
 }
 
-
+void *tj_calloc(unsigned int size) {
+	void *mem = tj_malloc(size);
+	memset(mem, 0, size);
+	return mem;
+}

@@ -10,7 +10,7 @@ extern void exit();
 #include "tj_malloc.h"
 #include <stdio.h>
 
-typedef struct {
+typedef struct example_s{
 	int brady;
 	uint16_t rings;
 	bool goat;
@@ -21,7 +21,7 @@ typedef struct {
 int main() {
 	example_t* pats = (example_t*)tj_malloc(sizeof(example_t));
 #ifdef DEBUG
-	printf("pts is %i\n", pats);
+	printf("pts is %i\n", (int)pats);
 	printf("what\n");
 #endif
 	pats->brady = 12; // as of 02/2019
@@ -34,17 +34,19 @@ int main() {
 #endif
 	example_t* another = (example_t*)tj_malloc(sizeof(example_t));
 #ifdef DEBUG
-	printf("pts is %i\n", another);
+	printf("pts is %i\n", (int)another);
 #endif
 	tj_free(pats);
 	example_t* third = (example_t*)tj_malloc(sizeof(example_t));
 	another->rings = 2003;
 	third->rings = 2004;
 #ifdef DEBUG
-	printf("created third %i\n", third);
+	printf("created third %i\n", (int)third);
 #endif
-	example_t* latest = (example_t*)tj_malloc(sizeof(example_t));
+	//let's make this test calloc
+	example_t* latest = (example_t*)tj_calloc(sizeof(example_t));
 	latest->rings = 2019;
+	if (latest->goat != 0) exit(2);
 	tj_free(another);
 	tj_free(latest);
 	return 0;

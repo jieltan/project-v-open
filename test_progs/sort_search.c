@@ -54,7 +54,8 @@ int main(void) {
 	for (int i = 0; i < N; ++i)
 		arr[i] = rand() & (31);
 
-	int x = 10; 
+	int x = 10;
+	bubble(arr, N);
 	int result = binarySearch(arr, 0, N-1, x);
 	int another_result = binarySearch(arr, 0, N-1,420);
 	int larry = binarySearch(arr, 0, N-1,33); //larry
