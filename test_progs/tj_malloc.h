@@ -55,24 +55,24 @@ void tj_free(void *mem) {
 			break; //freed block at start of end of the arena
 		//we can merge the 2 free blocks if they are adjacent to each other
 		//or we just can append a new entry into the free list
-		if (bp + bp->size == p->next) { //join to upper nbr
-			//merge if exactly adjacent
-			bp->size += p->next->size;
-			bp->next = p->next->next;
-		} else
-			bp->next = p->next; //insert bp after p in the linked list
-			//if p is freep which is base, then this will make the newly
-			//allocated block point to base
+	if (bp + bp->size == p->next) { //join to upper nbr
+		//merge if exactly adjacent
+		bp->size += p->next->size;
+		bp->next = p->next->next;
+	} else
+		bp->next = p->next; //insert bp after p in the linked list
+		//if p is freep which is base, then this will make the newly
+		//allocated block point to base
 
-		if (p + p->size == bp) { //join to lower nbr
-			//merge if exactly adjacent
-			p->size += bp->size;
-			p->next = bp->next;
-		} else //or just append to linked list
-			p->next = bp; //again, if the free list is just the base
-			//then effectively we just created a new entry
-			//and make it point to the base which has a size of 0
-		freep = p;
+	if (p + p->size == bp) { //join to lower nbr
+		//merge if exactly adjacent
+		p->size += bp->size;
+		p->next = bp->next;
+	} else //or just append to linked list
+		p->next = bp; //again, if the free list is just the base
+		//then effectively we just created a new entry
+		//and make it point to the base which has a size of 0
+	freep = p;
 }
 
 static Header* getmoremem(unsigned int total_size) {

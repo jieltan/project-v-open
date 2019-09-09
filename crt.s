@@ -12,6 +12,7 @@
 .align 4
 crt:
 	nop
+	la ra, exit
 	la sp, _sp
 	mv s0, sp
 	la gp, __global_pointer$
@@ -42,15 +43,7 @@ crt:
 	li t4, 0
 	li t5, 0
 	li t6, 0
-	j override_start
-.global override_start
-.section .text
-.align 4
-override_start:
-	nop
-	jal main
-	nop
-	j exit
+	j main
 
 .global exit
 .section .text
