@@ -25,10 +25,21 @@ ASFLAGS = -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -Wno-main -mstrict-
 OBJFLAGS = -SD -M no-aliases 
 OBJDFLAGS = -SD -M numeric,no-aliases
 
-GCC = riscv64-unknown-elf-gcc
-OBJDUMP = riscv64-unknown-elf-objdump
-AS = riscv64-unknown-elf-as
-
+##########################################################################
+# IF YOU AREN'T USING A CAEN MACHINE, CHANGE THIS TO FALSE OR OVERRIDE IT
+CAEN = 1
+##########################################################################
+ifeq (1, $(CAEN))
+	GCC = riscv gcc
+	OBJDUMP = riscv objdump
+	AS = riscv as
+	ELF2HEX = riscv elf2hex
+else
+	GCC = riscv64-unknown-elf-gcc
+	OBJDUMP = riscv64-unknown-elf-objdump
+	AS = riscv64-unknown-elf-as
+	ELF2HEX = elf2hex
+endif
 all: simv
 	./simv | tee program.out
 
@@ -43,7 +54,7 @@ dissemble: program.debug.elf
 	$(OBJDUMP) $(OBJDFLAGS) program.debug.elf > program.debug.dump
 	rm program.debug.elf
 hex: program.elf
-	elf2hex 8 8192 program.elf > program.mem
+	$(ELF2HEX) 8 8192 program.elf > program.mem
 
 program: compile dissemble hex
 	@:
