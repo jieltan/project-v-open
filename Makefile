@@ -46,22 +46,22 @@ all: simv
 compile: $(CRT) $(LINKERS)
 	$(GCC) $(CFLAGS) $(CRT) $(SOURCE) -T $(LINKERS) -o program.elf
 	$(GCC) $(CFLAGS) $(DEBUG_FLAG) $(CRT) $(SOURCE) -T $(LINKERS) -o program.debug.elf
-assemble: 
+assemble: $(ASLINKERS)
 	$(GCC) $(ASFLAGS) $(SOURCE) -T $(ASLINKERS) -o program.elf 
 	cp program.elf program.debug.elf
-dissemble: program.debug.elf
+disassemble: program.debug.elf
 	$(OBJDUMP) $(OBJFLAGS) program.debug.elf > program.dump
 	$(OBJDUMP) $(OBJDFLAGS) program.debug.elf > program.debug.dump
 	rm program.debug.elf
 hex: program.elf
 	$(ELF2HEX) 8 8192 program.elf > program.mem
 
-program: compile dissemble hex
+program: compile disassemble hex
 	@:
 
 debug_program:
 	gcc -lm -g -std=gnu11 -DDEBUG $(SOURCE) -o debug_bin
-assembly: assemble dissemble hex
+assembly: assemble disassemble hex
 	@:
 
 VCS = vcs -V -sverilog +vc -Mupdate -line -full64 +vcs+vcdpluson -debug_pp
