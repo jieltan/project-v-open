@@ -64,7 +64,7 @@ debug_program:
 assembly: assemble disassemble hex
 	@:
 
-VCS = vcs -V -sverilog +vc -Mupdate -line -full64 +vcs+vcdpluson -debug_pp
+VCS = vcs -V -sverilog +vc -Mupdate -line -full64 +vcs+vcdpluson -debug_pp # -CFLAGS "-std=c++11"
 LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 
 # For visual debugger
@@ -90,9 +90,13 @@ SIMFILES =	verilog/pipeline.sv	\
 
 SYNFILES = synth/pipeline.vg
 
-# For visual debugger
-VISTESTBENCH = $(TESTBENCH:testbench.v=visual_testbench.v) \
-		testbench/visual_c_hooks.c
+# Don't ask me why spell VisUal TestBenchER like this...
+VTUBER = sys_defs.svh	\
+		ISA.svh         \
+		testbench/mem.sv  \
+		testbench/visual_testbench.v \
+		testbench/visual_c_hooks.cpp \
+		testbench/pipe_print.c
 
 synth/pipeline.vg:        $(SIMFILES) synth/pipeline.tcl
 	cd synth && dc_shell-t -f ./pipeline.tcl | tee synth.out 
@@ -108,6 +112,10 @@ dve:	$(SIMFILES) $(TESTBENCH)
 .PHONY:	dve
 
 # For visual debugger
+vis_simv:	$(SIMFILES) $(VTUBER)
+	$(VCS) $(VISFLAGS) $(VTUBER) $(SIMFILES) -o vis_simv 
+	./vis_simv
+
 syn_simv:	$(SYNFILES) $(TESTBENCH)
 	$(VCS) $(TESTBENCH) $(SYNFILES) $(LIB) -o syn_simv 
 
