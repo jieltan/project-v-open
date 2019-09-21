@@ -6,8 +6,12 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/signal.h>
+#include <unistd.h> 
+#include <fcntl.h> 
 #include <time.h>
 #include <string.h>
+
+#include "riscv_inst.h"
 
 #define PARENT_READ     readpipe[0]
 #define CHILD_WRITE     readpipe[1]
@@ -16,8 +20,9 @@
 #define NUM_HISTORY     256
 #define NUM_ARF         32
 #define NUM_STAGES      5
-#define NOOP_INST       0x47ff041f
-#define NUM_REG_GROUPS  8
+#define NOOP_INST       0x00000013
+#define NUM_REG_GROUPS  4
+#define REG_SIZE_IN_HEX 8
 
 // random variables/stuff
 int fd[2], writepipe[2], readpipe[2];
@@ -70,6 +75,7 @@ WINDOW *mem_wb_win;
 WINDOW *wb_win;
 WINDOW *arf_win;
 WINDOW *misc_win;
+WINDOW *vtuber_win;
 
 // arrays for register contents and names
 int history_num=0;
@@ -214,6 +220,7 @@ void setup_gui(FILE *fp){
     init_pair(5,COLOR_YELLOW,COLOR_BLACK);  // register/signal windows
     init_pair(6,COLOR_RED,COLOR_BLACK);
     init_pair(7,COLOR_MAGENTA,COLOR_BLACK); // pipeline window
+    init_pair(8,COLOR_BLUE, COLOR_BLACK);
   }
   curs_set(0);
   noecho();
@@ -252,7 +259,7 @@ void setup_gui(FILE *fp){
   int i=0;
   char tmp_buf[32];
   for (; i < NUM_ARF; i++) {
-    sprintf(tmp_buf, "r%02d: ", i);
+    sprintf(tmp_buf, "x%02d: ", i);
     mvwprintw(arf_win,i+1,1,tmp_buf);
   }
   wrefresh(arf_win);
@@ -328,9 +335,17 @@ void setup_gui(FILE *fp){
   wrefresh(instr_win);
   
   // instantiate window to visualize misc regs/wires
-  misc_win = create_newwin(7,COLS-25-30,LINES-7,30,5);
+  misc_win = create_newwin(7,25,LINES-7,30,5);
   mvwprintw(misc_win,0,(COLS-30-30)/2-6,"MISC SIGNALS");
   wrefresh(misc_win);
+
+  vtuber_win = create_newwin(10, 47, LINES-10, COLS-47, 8);
+  mvwaddstr(vtuber_win, 2, 4, "__     _______ _   _ ____  _____ ____");
+  mvwaddstr(vtuber_win, 3, 4, "\\ \\   / /_   _| | | | __ )| ____|  _ \\");
+  mvwaddstr(vtuber_win, 4, 4, " \\ \\ / /  | | | | | |  _ \\|  _| | |_) |");
+  mvwaddstr(vtuber_win, 5, 4, "  \\ V /   | | | |_| | |_) | |___|  _ <");
+  mvwaddstr(vtuber_win, 6, 4, "   \\_/    |_|  \\___/|____/|_____|_| \\_\\");
+  wrefresh(vtuber_win);
 
   refresh();
 }
@@ -389,13 +404,14 @@ void parsedata(int history_num_in){
   wrefresh(pipe_win);
 
   // Handle updating the ARF window
+  int num_size = REG_SIZE_IN_HEX;
   for (i=0; i < NUM_ARF; i++) {
-    if (strncmp(arf_contents[history_num_in]+i*16,
-                arf_contents[old_history_num_in]+i*16,16))
+    if (strncmp(arf_contents[history_num_in]+i*num_size,
+                arf_contents[old_history_num_in]+i*num_size,num_size))
       wattron(arf_win, A_REVERSE);
     else
       wattroff(arf_win, A_REVERSE);
-    mvwaddnstr(arf_win,i+1,6,arf_contents[history_num_in]+i*16,16);
+    mvwaddnstr(arf_win,i+1,6,arf_contents[history_num_in]+i*num_size,num_size);
   }
   wrefresh(arf_win);
 
@@ -773,7 +789,7 @@ int processinput(){
 }
 
 //this initializes a ncurses window and sets up the arrays for exchanging reg information
-void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_regs, int ex_regs,
+extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_regs, int ex_regs,
                 int ex_mem_regs, int mem_regs, int mem_wb_regs, int wb_regs,
                 int misc_regs){
   int nbytes;
@@ -1050,7 +1066,7 @@ void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_regs, int ex
 
 
 // Function to make testbench block until debugger is ready to proceed
-int waitforresponse(){
+extern "C" int waitforresponse(){
   static int mem_start = 0;
   char c=0;
   while(c!='n' && c!='Z') read(PARENT_READ,&c,1);
@@ -1060,7 +1076,7 @@ int waitforresponse(){
   return(mem_start);
 }
 
-void flushpipe(){
+extern "C" void flushpipe(){
   char c=0;
   read(PARENT_READ, &c, 1);
 }
@@ -1078,152 +1094,9 @@ char *get_opcode_str(int inst, int valid_inst)
   else if(inst==NOOP_INST)
     str = "nop";
   else {
-    opcode = (inst >> 26) & 0x0000003f;
-    check = (inst>>5) & 0x0000007f;
-    switch(opcode)
-    {
-      case 0x00: str = (inst == 0x555) ? "halt" : "call_pal"; break;
-      case 0x08: str = "lda"; break;
-      case 0x09: str = "ldah"; break;
-      case 0x0a: str = "ldbu"; break;
-      case 0x0b: str = "ldqu"; break;
-      case 0x0c: str = "ldwu"; break;
-      case 0x0d: str = "stw"; break;
-      case 0x0e: str = "stb"; break;
-      case 0x0f: str = "stqu"; break;
-      case 0x10: // INTA_GRP
-         switch(check)
-         {
-           case 0x00: str = "addl"; break;
-           case 0x02: str = "s4addl"; break;
-           case 0x09: str = "subl"; break;
-           case 0x0b: str = "s4subl"; break;
-           case 0x0f: str = "cmpbge"; break;
-           case 0x12: str = "s8addl"; break;
-           case 0x1b: str = "s8subl"; break;
-           case 0x1d: str = "cmpult"; break;
-           case 0x20: str = "addq"; break;
-           case 0x22: str = "s4addq"; break;
-           case 0x29: str = "subq"; break;
-           case 0x2b: str = "s4subq"; break;
-           case 0x2d: str = "cmpeq"; break;
-           case 0x32: str = "s8addq"; break;
-           case 0x3b: str = "s8subq"; break;
-           case 0x3d: str = "cmpule"; break;
-           case 0x40: str = "addlv"; break;
-           case 0x49: str = "sublv"; break;
-           case 0x4d: str = "cmplt"; break;
-           case 0x60: str = "addqv"; break;
-           case 0x69: str = "subqv"; break;
-           case 0x6d: str = "cmple"; break;
-           default: str = "invalid"; break;
-         }
-         break;
-      case 0x11: // INTL_GRP
-         switch(check)
-         {
-           case 0x00: str = "and"; break;
-           case 0x08: str = "bic"; break;
-           case 0x14: str = "cmovlbs"; break;
-           case 0x16: str = "cmovlbc"; break;
-           case 0x20: str = "bis"; break;
-           case 0x24: str = "cmoveq"; break;
-           case 0x26: str = "cmovne"; break;
-           case 0x28: str = "ornot"; break;
-           case 0x40: str = "xor"; break;
-           case 0x44: str = "cmovlt"; break;
-           case 0x46: str = "cmovge"; break;
-           case 0x48: str = "eqv"; break;
-           case 0x61: str = "amask"; break;
-           case 0x64: str = "cmovle"; break;
-           case 0x66: str = "cmovgt"; break;
-           case 0x6c: str = "implver"; break;
-           default: str = "invalid"; break;
-         }
-         break;
-      case 0x12: // INTS_GRP
-         switch(check)
-         {
-           case 0x02: str = "mskbl"; break;
-           case 0x06: str = "extbl"; break;
-           case 0x0b: str = "insbl"; break;
-           case 0x12: str = "mskwl"; break;
-           case 0x16: str = "extwl"; break;
-           case 0x1b: str = "inswl"; break;
-           case 0x22: str = "mskll"; break;
-           case 0x26: str = "extll"; break;
-           case 0x2b: str = "insll"; break;
-           case 0x30: str = "zap"; break;
-           case 0x31: str = "zapnot"; break;
-           case 0x32: str = "mskql"; break;
-           case 0x34: str = "srl"; break;
-           case 0x36: str = "extql"; break;
-           case 0x39: str = "sll"; break;
-           case 0x3b: str = "insql"; break;
-           case 0x3c: str = "sra"; break;
-           case 0x52: str = "mskwh"; break;
-           case 0x57: str = "inswh"; break;
-           case 0x5a: str = "extwh"; break;
-           case 0x62: str = "msklh"; break;
-           case 0x67: str = "inslh"; break;
-           case 0x6a: str = "extlh"; break;
-           case 0x72: str = "mskqh"; break;
-           case 0x77: str = "insqh"; break;
-           case 0x7a: str = "extqh"; break;
-           default: str = "invalid"; break;
-         }
-         break;
-      case 0x13: // INTM_GRP
-         switch(check)
-         {
-           case 0x00: str = "mull"; break;
-           case 0x20: str = "mulq"; break;
-           case 0x30: str = "umulh"; break;
-           case 0x40: str = "mullv"; break;
-           case 0x60: str = "mulqv"; break;
-           default: str = "invalid"; break;
-         }
-         break;
-      case 0x14: str = "itfp"; break; // unimplemented
-      case 0x15: str = "fltv"; break; // unimplemented
-      case 0x16: str = "flti"; break; // unimplemented
-      case 0x17: str = "fltl"; break; // unimplemented
-      case 0x1a: str = "jsr"; break;
-      case 0x1c: str = "ftpi"; break;
-      case 0x20: str = "ldf"; break;
-      case 0x21: str = "ldg"; break;
-      case 0x22: str = "lds"; break;
-      case 0x23: str = "ldt"; break;
-      case 0x24: str = "stf"; break;
-      case 0x25: str = "stg"; break;
-      case 0x26: str = "sts"; break;
-      case 0x27: str = "stt"; break;
-      case 0x28: str = "ldl"; break;
-      case 0x29: str = "ldq"; break;
-      case 0x2a: str = "ldll"; break;
-      case 0x2b: str = "ldql"; break;
-      case 0x2c: str = "stl"; break;
-      case 0x2d: str = "stq"; break;
-      case 0x2e: str = "stlc"; break;
-      case 0x2f: str = "stqc"; break;
-      case 0x30: str = "br"; break;
-      case 0x31: str = "fbeq"; break;
-      case 0x32: str = "fblt"; break;
-      case 0x33: str = "fble"; break;
-      case 0x34: str = "bsr"; break;
-      case 0x35: str = "fbne"; break;
-      case 0x36: str = "fbge"; break;
-      case 0x37: str = "fbgt"; break;
-      case 0x38: str = "blbc"; break;
-      case 0x39: str = "beq"; break;
-      case 0x3a: str = "blt"; break;
-      case 0x3b: str = "ble"; break;
-      case 0x3c: str = "blbs"; break;
-      case 0x3d: str = "bne"; break;
-      case 0x3e: str = "bge"; break;
-      case 0x3f: str = "bgt"; break;
-      default: str = "invalid"; break;
-    }
+    inst_t dummy_inst;
+    dummy_inst.decode(inst);
+    str = const_cast<char*>(dummy_inst.str); // due to legacy code..
   }
 
   return str;
