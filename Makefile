@@ -64,7 +64,7 @@ debug_program:
 assembly: assemble disassemble hex
 	@:
 
-VCS = vcs -V -sverilog +vc -Mupdate -line -full64 +vcs+vcdpluson -debug_pp # -CFLAGS "-std=c++11"
+VCS = vcs -V -sverilog +vc -Mupdate -line -full64 +vcs+vcdpluson -debug_pp 
 LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 
 # For visual debugger
