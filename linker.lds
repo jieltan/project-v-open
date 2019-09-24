@@ -2,7 +2,6 @@
 * linker.lds
 * a linker script used to link RISC-V object files
 * .text section starts at 0x0
-* stack pointer allocated at 0x4000
 *   - Jielun Tan, 02/2019
 **************************************************/
 
