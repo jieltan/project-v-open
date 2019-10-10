@@ -21,6 +21,7 @@ ASLINKERS = aslinker.lds
 
 DEBUG_FLAG = -g
 CFLAGS =  -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -std=gnu11 -mstrict-align 
+OFLAGS = -O0
 ASFLAGS = -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -Wno-main -mstrict-align
 OBJFLAGS = -SD -M no-aliases 
 OBJDFLAGS = -SD -M numeric,no-aliases
@@ -44,7 +45,7 @@ all: simv
 	./simv | tee program.out
 
 compile: $(CRT) $(LINKERS)
-	$(GCC) $(CFLAGS) $(CRT) $(SOURCE) -T $(LINKERS) -o program.elf
+	$(GCC) $(CFLAGS) $(OFLAGS) $(CRT) $(SOURCE) -T $(LINKERS) -o program.elf
 	$(GCC) $(CFLAGS) $(DEBUG_FLAG) $(CRT) $(SOURCE) -T $(LINKERS) -o program.debug.elf
 assemble: $(ASLINKERS)
 	$(GCC) $(ASFLAGS) $(SOURCE) -T $(ASLINKERS) -o program.elf 

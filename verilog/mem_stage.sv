@@ -33,8 +33,8 @@ module mem_stage(
 
 	// Determine the command that must be sent to mem
 	assign proc2Dmem_command =
-	                        ex_mem_packet_in.wr_mem  ? BUS_STORE :
-	                        ex_mem_packet_in.rd_mem  ? BUS_LOAD :
+	                        (ex_mem_packet_in.wr_mem & ex_mem_packet_in.valid) ? BUS_STORE :
+							(ex_mem_packet_in.rd_mem & ex_mem_packet_in.valid) ? BUS_LOAD :
 	                        BUS_NONE;
 
 	assign proc2Dmem_size = MEM_SIZE'(ex_mem_packet_in.mem_size[1:0]);	//only the 2 LSB to determine the size;
