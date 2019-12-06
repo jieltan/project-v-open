@@ -8,7 +8,7 @@
 #ifndef DEBUG
 extern void exit();
 #endif
-#define N 32
+#define N 4
 
 int n = N;
 
@@ -28,7 +28,7 @@ void kernel(int  vec_a[n],int  vec_b[n], int result[n], int b, int *out) {
 int main() {
 	int x[n], W[n], inner[n];
 	int b;
-	int *out;
+	int out;
 	//initializing weights
 	for (int i = 0; i < n; ++i) {
 		x[i] = rand() & ((1 << 16) - 1);
@@ -37,7 +37,7 @@ int main() {
 	}
 	b = rand();
 	//the actual layer
-	kernel(x,W,inner,b, out);
+	kernel(x,W,inner,b, &out);
 	
 	return 0;
 
