@@ -20,7 +20,7 @@ LINKERS = linker.lds
 ASLINKERS = aslinker.lds
 
 DEBUG_FLAG = -g
-CFLAGS =  -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -std=gnu11 -mstrict-align 
+CFLAGS =  -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -std=gnu11 -mstrict-align -I exception_handler
 OFLAGS = -O0
 ASFLAGS = -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -Wno-main -mstrict-align
 OBJFLAGS = -SD -M no-aliases 
@@ -46,7 +46,7 @@ all: simv
 
 compile: $(CRT) $(LINKERS)
 	$(GCC) $(CFLAGS) $(OFLAGS) $(CRT) $(SOURCE) -T $(LINKERS) -o program.elf
-	$(GCC) $(CFLAGS) $(DEBUG_FLAG) $(CRT) $(SOURCE) -T $(LINKERS) -o program.debug.elf
+	$(GCC) $(CFLAGS) $(DEBUG_FLAG) $(OFLAGS) $(CRT) $(SOURCE) -T $(LINKERS) -o program.debug.elf
 assemble: $(ASLINKERS)
 	$(GCC) $(ASFLAGS) $(SOURCE) -T $(ASLINKERS) -o program.elf 
 	cp program.elf program.debug.elf
@@ -87,7 +87,8 @@ SIMFILES =	verilog/pipeline.sv	\
 		verilog/id_stage.sv	\
 		verilog/ex_stage.sv	\
 		verilog/mem_stage.sv	\
-		verilog/wb_stage.sv	
+		verilog/wb_stage.sv	\
+		verilog/csr.sv
 
 SYNFILES = synth/pipeline.vg
 
