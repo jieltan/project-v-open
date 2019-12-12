@@ -88,7 +88,6 @@ SIMFILES =	verilog/pipeline.sv	\
 		verilog/ex_stage.sv	\
 		verilog/mem_stage.sv	\
 		verilog/wb_stage.sv	\
-		verilog/csr.sv
 
 SYNFILES = synth/pipeline.vg
 
