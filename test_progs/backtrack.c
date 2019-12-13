@@ -7,7 +7,7 @@
 //   - Jielun Tan, 12/2019
 ///////////////////////////////////////////////////
 #include<stdio.h>
-#define N 4
+#define N 3
 
 #ifndef DEBUG
 extern void exit();
