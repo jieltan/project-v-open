@@ -25,7 +25,7 @@ int main(){
 	//numbers 0 - 22 (inclusive)
 	int arr[N];
 	for (int i = 0; i < N; ++i) 
-		arr[i] = rand() & 1023;
+		arr[i] = rand() % 1023;
 
 	insertion(arr, N);
 
