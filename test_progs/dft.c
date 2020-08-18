@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "tj_malloc.h"
 
+#define SHORT_TYPE_SIZE 32
 typedef short byte;
 
 const byte n = 8;
