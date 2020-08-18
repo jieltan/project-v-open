@@ -8,7 +8,6 @@
  */
 
 #include <stdio.h>
-#include "DirectC.h"
 
 #define NOOP_INST 0x00000013
 
