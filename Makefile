@@ -108,8 +108,8 @@ synth/pipeline.vg:        $(SIMFILES) synth/pipeline.tcl
 simv:	$(SIMFILES) $(TESTBENCH)
 	$(VCS) $(TESTBENCH) $(SIMFILES)	-o simv
 
-verdi:	$(SIMFILES) $(TESTBENCH)
-	$(VCS) +memcbk $(TESTBENCH) $(SIMFILES) -o verdi -R -verdi
+dve:	$(SIMFILES) $(TESTBENCH)
+	$(VCS) +memcbk $(TESTBENCH) $(SIMFILES) -o dve -R -gui
 .PHONY:	dve
 
 # For visual debugger
